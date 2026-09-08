@@ -13,7 +13,7 @@
 
 ## 🎬 Demo
 
-> ▶️ **[Watch the demo video](https://drive.google.com/file/d/1z6CPxYmi_5Xf2_u0FVMUq9nTm6mhLQ_I/view?usp=sharing)**
+> ▶️ **[Watch the demo video](https://drive.google.com/file/d/1QsFht6_QpY5vZAVHCBjR-gjXJe4wl_wX/view?usp=sharing)**
 
 Send a voice note in Hindi, Tamil, English, or a mix — and PantryPilot understands it, finds the products on Swiggy Instamart, adds them to your real cart, and sends back a clear, itemised confirmation. You review and check out yourself.
 
