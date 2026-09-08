@@ -1,0 +1,712 @@
+{
+  "name": "PantryPilot",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/getUpdates?offset=-1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        16,
+        -544
+      ],
+      "id": "f47113bb-b268-4642-8e46-2ba1c4fc1884",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b64be1af-8153-4d28-925e-f462d8e6bfb5",
+              "name": "text",
+              "value": "={{ $json.result[$json.result.length - 1].message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "f81796be-bb5c-4de9-8cec-d671dc66a8d5",
+              "name": "chatId",
+              "value": "={{ $json.result[$json.result.length - 1].message.chat.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        -208
+      ],
+      "id": "fadd7ac4-643d-4a95-9ba2-f723b0fceacc",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        -352
+      ],
+      "id": "1b5153a0-029e-4f0a-b722-f6d42006a678",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "32e2e78c-93ce-4e71-a09c-2a99300fd761",
+              "leftValue": "={{ $json.result[$json.result.length - 1].message.voice }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        -288
+      ],
+      "id": "e595519b-9cd2-4f40-a70d-5b136cdb4cf2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/getFile?file_id={{ $json.result[$json.result.length - 1].message.voice.file_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        336
+      ],
+      "id": "8e5cc5a0-e1d4-457e-83fc-ec583cd97927",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/file/botYOUR_TELEGRAM_BOT_TOKEN/{{ $json.result.file_path }}\n",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        96,
+        0
+      ],
+      "id": "63dd4f22-edc4-4edb-9339-04b72f6ce9bd",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.groq.com/openai/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY "
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "model",
+              "value": "whisper-large-v3-turbo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        464,
+        384
+      ],
+      "id": "0f32deea-2d27-4346-802b-ea248bb803f8",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst binary = item.binary.data;\nbinary.fileName = 'audio.ogg';\nbinary.fileExtension = 'ogg';\nbinary.mimeType = 'audio/ogg';\nreturn [{ json: item.json, binary: { data: binary } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        80
+      ],
+      "id": "87ce6171-e247-4979-8ea7-e310f1514e23",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23987b0f-e653-4c34-901a-9d8831a93faf",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "9904e9e7-c3e1-4522-a20f-3a59bf691a97",
+              "name": "chatId",
+              "value": "={{ $('HTTP Request').item.json.result[$('HTTP Request').item.json.result.length - 1].message.chat.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        96
+      ],
+      "id": "42ee0cd3-4f1b-43ee-b35e-339fd1d23c3a",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY "
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: \"openai/gpt-oss-20b\",\n  reasoning_effort: \"low\",\n  messages: [\n    { role: \"system\", content: \"You are a multilingual grocery parser. The user may speak in English, Hindi, Hinglish (Hindi-English mix), or any Indian language, via voice or text. Extract the shopping items and return ONLY a JSON array, no other text. Each element: {\\\"item\\\": string, \\\"qty\\\": number, \\\"unit\\\": string}. IMPORTANT: always translate the item name to its common ENGLISH grocery term (e.g. doodh\u2192milk, chawal\u2192rice, cheeni\u2192sugar, atta\u2192flour, anda\u2192eggs, dahi\u2192curd, pyaaz\u2192onion). If quantity or unit is unclear, use qty 1 and unit \\\"unit\\\". Example: input 'do packet doodh aur ek bread' \u2192 [{\\\"item\\\":\\\"milk\\\",\\\"qty\\\":2,\\\"unit\\\":\\\"packet\\\"},{\\\"item\\\":\\\"bread\\\",\\\"qty\\\":1,\\\"unit\\\":\\\"unit\\\"}]\" },\n    { role: \"user\", content: $json.text }\n  ],\n  max_tokens: 500,\n  temperature: 0\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        960,
+        0
+      ],
+      "id": "4358152b-9061-4f15-893a-c5484b893979",
+      "name": "HTTP Request4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: \"qwen/qwen3.6-27b\",\n  reasoning_effort: \"none\",\n  messages: [\n    { role: \"system\", content: \"You are a grocery cart builder. Input: the user's requested items (with quantities) and search results for each item in the SAME order. For EACH requested item, pick ONE best product variant. RULES: (1) Skip any product with isPromoted true. (2) Prefer a standard single pack, not bulk/multipacks. (3) Only inStock variants. (4) If a search result is empty, omit that item. Output ONLY a compact JSON array, no explanation. Format: [{\\\"spinId\\\":\\\"X\\\",\\\"name\\\":\\\"product name\\\",\\\"quantity\\\":N}]\" },\n    { role: \"user\", content: \"Requested items: \" + JSON.stringify($('Code in JavaScript1').all().map(i => i.json)) + \"\\n\\nSearch results (same order): \" + JSON.stringify($json.searchResults) }\n  ],\n  max_tokens: 800,\n  temperature: 0\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2064,
+        -128
+      ],
+      "id": "9dfb2ca6-35d8-46a7-824b-e7585cba18c2",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mcp.swiggy.com/im",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SWIGGY_MCP_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ jsonrpc: \"2.0\", id: 1, method: \"tools/call\", params: { name: \"update_cart\", arguments: { selectedAddressId: \"YOUR_SWIGGY_ADDRESS_ID\", items: $json.items } } }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2400,
+        -144
+      ],
+      "id": "1bf7071d-d9a4-4f60-9e2a-e7eaf720e29d",
+      "name": "HTTP Request6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = ($input.first().json.choices?.[0]?.message?.content || \"\").trim();\nlet items = [];\ntry { items = JSON.parse(raw); } catch (e) { items = []; }\n\n// If empty (gibberish/non-grocery), emit a single marker item so the flow continues to the IF check\nif (!Array.isArray(items) || items.length === 0) {\n  return [{ json: { _empty: true } }];\n}\n\n// Normal case: one item per grocery item, each flagged not-empty\nreturn items.map(it => ({ json: { ...it, _empty: false } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        400
+      ],
+      "id": "9dc2e690-3456-419b-9507-270d2d35caec",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mcp.swiggy.com/im",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SWIGGY_MCP_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ jsonrpc: \"2.0\", id: 1, method: \"tools/call\", params: { name: \"search_products\", arguments: { addressId: \"YOUR_SWIGGY_ADDRESS_ID\", query: $json.item } } }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1744,
+        496
+      ],
+      "id": "4919b556-05c2-4623-b871-dc6e09921de1",
+      "name": "HTTP Request7"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst simplified = items.map((it, idx) => {\n  const products = (it.json.result?.structuredContent?.products || []).slice(0, 8).map(p => ({\n    name: p.displayName,\n    isPromoted: p.isPromoted || false,\n    variants: (p.variations || []).map(v => ({\n      spinId: v.spinId,\n      size: v.quantityDescription,\n      price: v.price?.offerPrice,\n      inStock: v.isInStockAndAvailable\n    }))\n  }));\n  return { searchIndex: idx, products };\n});\nreturn [{ json: { searchResults: simplified } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        176
+      ],
+      "id": "1c8cd45c-f15e-4881-b11c-64e845b0cdba",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the LLM's selected items\nconst raw = ($input.first().json.choices?.[0]?.message?.content || \"\").trim();\nif (!raw) { throw new Error(\"Selection LLM returned empty content.\"); }\nlet items;\ntry { items = JSON.parse(raw); }\ncatch (e) { throw new Error(\"Selection returned invalid JSON: \" + raw.slice(0, 200)); }\n\n// Get what the user originally requested\nconst requested = $('Code in JavaScript1').all().map(i => i.json);\n\n// Find requested items that did NOT make it into the cart\nconst selectedNames = items.map(i => (i.name || \"\").toLowerCase());\nconst missing = requested\n  .filter(r => {\n    const reqItem = (r.item || \"\").toLowerCase();\n    return !selectedNames.some(sn => sn.includes(reqItem) || reqItem.includes(sn.split(\" \")[0]));\n  })\n  .map(r => r.item);\n\nreturn [{ json: { items, missing } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        256
+      ],
+      "id": "be154f7f-9365-4a12-8252-f2e6854f8b0e",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ ($('Code in JavaScript3').first().json.items.length > 0 ? \"\u2705 Added to your Swiggy Instamart cart:\\n\\n\" + $('Code in JavaScript3').first().json.items.map(i => \"\u2022 \" + i.quantity + \"\u00d7 \" + i.name).join(\"\\n\") : \"\ud83d\uded2 Nothing could be added to your cart.\") + ($('Code in JavaScript3').first().json.missing.length > 0 ? \"\\n\\n\u26a0\ufe0f Couldn't find: \" + $('Code in JavaScript3').first().json.missing.join(\", \") : \"\") + \"\\n\\n\ud83d\uded2 [Open Instamart cart](https://www.swiggy.com/instamart) to review & checkout.\" }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2736,
+        80
+      ],
+      "id": "af854a30-80a2-40be-99c6-ec09818f4ebd",
+      "name": "Send a text message1",
+      "webhookId": "151d615f-0919-4d70-94d9-d86b9e1cb80d",
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Your telegramApi credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json.result || [];\nif (result.length === 0) { return []; }\nconst latest = result[result.length - 1];\nconst latestId = latest.update_id;\n\nconst token = \"YOUR_TELEGRAM_BOT_TOKEN\";\nlet ackStatus = \"not attempted\";\ntry {\n  const resp = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=${latestId + 1}`);\n  ackStatus = \"ack sent, status \" + resp.status;\n} catch (e) {\n  ackStatus = \"ack FAILED: \" + e.message;\n}\n\nreturn [{ json: { ackStatus, latestId, passedThrough: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        -336
+      ],
+      "id": "7c834f9e-2ea3-4416-b1a3-b8596b53dd46",
+      "name": "Code in JavaScript4",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1e53b677-47bd-4a85-af57-9a19e0fac01c",
+              "leftValue": "={{ $json._empty ? \"yes\" : \"no\" }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        32
+      ],
+      "id": "3902c52e-f16f-4913-9e2b-fe43292139a9",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "     \ud83e\udd14 I couldn't find any grocery items in that. Try naming products, e.g. \"milk, bread, eggs\".",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        -144
+      ],
+      "id": "34ed33a2-6aa2-4dff-b9a3-a51ca2c30cc3",
+      "name": "Send a text message2",
+      "webhookId": "a7168637-b31b-4b3f-be08-f8b76a704177",
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Your telegramApi credential"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request7": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request6": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": []
+}
